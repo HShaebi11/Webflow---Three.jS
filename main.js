@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 // Initialize scene, camera and renderer
@@ -25,8 +24,7 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(5, 5, 5);
 scene.add(directionalLight);
 
-// Initialize model variables
-const loader = new GLTFLoader();
+// Initialize cube variables
 let model;
 const colors = [
     new THREE.Color(0x00ff00), // Green
@@ -45,36 +43,21 @@ const initialCameraZ = 20;
 const mouse = new THREE.Vector2();
 let isMouseDown = false;
 
-// Load and setup model
-loader.load('https://raw.githubusercontent.com/HShaebi11/Custom-Model-02/main/assets/smile.gltf', function(gltf) {
-	model = gltf.scene;
-	model.scale.set(initialScale, initialScale, initialScale);
-	
-	// Apply color to all meshes
-	model.traverse((child) => {
-		if (child.isMesh) {
-			child.material.color = modelColor;
-			child.material.emissive = modelColor;
-			child.material.emissiveIntensity = 0.5;
-			child.material.metalness = 0.5;
-			child.material.roughness = 0.5;
-		}
-	});
-	
-	scene.add(model);
-	
-	// Center model
-	const box = new THREE.Box3().setFromObject(model);
-	const center = box.getCenter(new THREE.Vector3());
-	model.position.x = -center.x;
-	model.position.y = -center.y;
-	model.position.z = -center.z;
-	
-	// Set initial camera position
-	camera.position.z = initialCameraZ;
-}, undefined, function(error) {
-	console.error(error);
+// Create and setup cube
+const geometry = new THREE.BoxGeometry(1, 1, 1);
+const material = new THREE.MeshStandardMaterial({
+    color: modelColor,
+    emissive: modelColor,
+    emissiveIntensity: 0.5,
+    metalness: 0.5,
+    roughness: 0.5
 });
+model = new THREE.Mesh(geometry, material);
+model.scale.set(initialScale, initialScale, initialScale);
+scene.add(model);
+
+// Set initial camera position
+camera.position.z = initialCameraZ;
 
 const moveSpeed = 0.5;
 
@@ -120,86 +103,80 @@ function updateControllerInput() {
             if (gamepad.buttons[0].pressed) {
                 currentColorIndex = (currentColorIndex + 1) % colors.length;
                 const newColor = colors[currentColorIndex];
-                model.traverse((child) => {
-                    if (child.isMesh) {
-                        child.material.color = newColor;
-                        child.material.emissive = newColor;
-                    }
-                });
+                model.material.color = newColor;
+                model.material.emissive = newColor;
             }
         }
     }
 }
 
 document.addEventListener('keydown', (event) => {
-	if (!model) return;
-	
-	switch(event.key) {
-		case 'ArrowUp':
-			model.position.y += moveSpeed;
-			break;
-		case 'ArrowDown':
-			model.position.y -= moveSpeed;
-			break;
-		case 'ArrowLeft':
-			model.position.x -= moveSpeed;
-			break;
-		case 'ArrowRight':
-			model.position.x += moveSpeed;
-			break;
-		case 'PageUp':
-			model.position.z -= moveSpeed;
-			break;
-		case 'PageDown':
-			model.position.z += moveSpeed;
-			break;
-		case 'q':
-			if (model) {
-				model.position.set(0, 0, 0);
-			}
-			camera.position.set(0, 0, initialCameraZ);
-			controls.reset();
-			break;
-		case 'r': // Reset position and camera
-			resetToInitialPosition();
-			break;
-	}
+    if (!model) return;
+    
+    switch(event.key) {
+        case 'ArrowUp':
+            model.position.y += moveSpeed;
+            break;
+        case 'ArrowDown':
+            model.position.y -= moveSpeed;
+            break;
+        case 'ArrowLeft':
+            model.position.x -= moveSpeed;
+            break;
+        case 'ArrowRight':
+            model.position.x += moveSpeed;
+            break;
+        case 'PageUp':
+            model.position.z -= moveSpeed;
+            break;
+        case 'PageDown':
+            model.position.z += moveSpeed;
+            break;
+        case 'q':
+            if (model) {
+                model.position.set(0, 0, 0);
+            }
+            camera.position.set(0, 0, initialCameraZ);
+            controls.reset();
+            break;
+        case 'r': // Reset position and camera
+            resetToInitialPosition();
+            break;
+    }
 });
 
 function resetToInitialPosition() {
-	if (model) {
-		const box = new THREE.Box3().setFromObject(model);
-		const center = box.getCenter(new THREE.Vector3());
-		model.position.set(-center.x, -center.y, -center.z);
-	}
-	camera.position.set(0, 0, initialCameraZ);
-	controls.reset();
+    if (model) {
+        model.position.set(0, 0, 0);
+    }
+    camera.position.set(0, 0, initialCameraZ);
+    controls.reset();
 }
 
 document.addEventListener('mousemove', (event) => {
-	if (!model || !isMouseDown) return;
-	
-	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-	
-	model.position.x = mouse.x * 20;
-	model.position.y = mouse.y * 20;
+    if (!model || !isMouseDown) return;
+    
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    
+    model.position.x = mouse.x * 20;
+    model.position.y = mouse.y * 20;
 });
 
 document.addEventListener('mousedown', () => {
-	isMouseDown = true;
+    isMouseDown = true;
 });
 
 document.addEventListener('mouseup', () => {
-	isMouseDown = false;
+    isMouseDown = false;
 });
 
 // Animation loop
 function animate() {
-	requestAnimationFrame(animate);
-	updateControllerInput();
-	controls.update();
-	renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+    updateControllerInput();
+    controls.update();
+    renderer.render(scene, camera);
 }
 
 animate();
